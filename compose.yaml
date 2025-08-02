@@ -1,0 +1,32 @@
+services:
+  nqptp:
+    container_name: nqptp
+    image: nqptp-image
+    build: nqptp
+    network_mode: host
+    restart: unless-stopped
+    volumes:
+      - /dev/shm:/dev/shm
+  shairport-sync:
+    container_name: shairport-sync
+    image: shairport-sync-image
+    build: shairport-sync
+    network_mode: host
+    restart: unless-stopped
+    environment:
+      PULSE_SERVER: unix:/tmp/pulseaudio.socket
+      PULSE_COOKIE: /tmp/pulseaudio.cookie
+    volumes:
+      - ./shairport-sync.conf:/etc/shairport-sync.conf:ro
+      - /dev/shm:/dev/shm
+      - /var/run/dbus/system_bus_socket:/var/run/dbus/system_bus_socket
+      - /run/user/${UID:?}/pulse/native:/tmp/pulseaudio.socket
+      - ${HOME}/.config/pulse/cookie:/tmp/pulseaudio.cookie
+    command: --configfile /etc/shairport-sync.conf --output=pa --logOutputLevel -v
+    depends_on:
+      - nqptp
+    logging:
+      options:
+        max-size: "200k"
+        max-file: "10"
+
